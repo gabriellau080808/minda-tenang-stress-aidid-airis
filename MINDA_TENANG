@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MINDA TENANG - Stress Quest</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;padding:25px;font-family:Arial,sans-serif;
+ color:#365166;
+ background:linear-gradient(135deg,#dceeff,#e1f5e9,#ffe5ed);
+ min-height:100vh
+}
+main{
+ max-width:850px;margin:35px auto;background:#ffffffdf;
+ padding:35px;border-radius:28px;
+ box-shadow:0 15px 45px #6c91a522
+}
+h1{text-align:center;color:#6c9fbd;font-size:38px}
+.sub{text-align:center;color:#8296a5;line-height:1.6}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:25px 0}
+.mode,.answer{
+ border:2px solid #e4edf2;background:#f8fbfd;
+ padding:18px;border-radius:16px;color:#365166;
+ cursor:pointer;font-size:15px
+}
+.mode:hover,.answer:hover{border-color:#8fc6d9;background:#eef8fc}
+.mode b{display:block;margin-bottom:8px}
+button{font:inherit}
+.start,.next{
+ background:linear-gradient(100deg,#83b8d8,#8bc9a9);
+ color:white;border:0;padding:14px 25px;
+ border-radius:14px;cursor:pointer;font-weight:bold
+}
+.start{display:block;margin:auto}
+.info{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:20px 0}
+.bar{height:9px;background:#edf1f4;border-radius:20px;overflow:hidden}
+.fill{height:100%;width:0;background:#83c4ad;transition:.3s}
+#answers{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
+.answer{text-align:left}
+.correct{background:#e4f7eb;border-color:#79c99d}
+.wrong{background:#ffe9ef;border-color:#e69aad}
+#feedback{padding:15px;border-radius:13px;margin-top:18px;line-height:1.5}
+.hidden{display:none}
+#question{font-size:24px;line-height:1.4}
+.result{text-align:center}
+@media(max-width:600px){
+ main{padding:22px;margin:10px auto}
+ .modes{grid-template-columns:1fr}
+ #answers{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<main>
+<section id="home">
+ <h1>🌿 MINDA TENANG</h1>
+ <h2 style="text-align:center">STRESS QUEST</h2>
+ <p class="sub">Kenali tekanan, fahami puncanya dan pelajari cara mengurus stres melalui permainan interaktif!</p>
+ <h3 style="text-align:center">Pilih misi anda</h3>
+ <div class="modes">
+  <button class="mode" onclick="start('all')"><b>🎯 Misi Lengkap</b>Semua topik stres</button>
+  <button class="mode" onclick="start('cause')"><b>🔍 Pemburu Punca</b>Punca dan tanda stres</button>
+  <button class="mode" onclick="start('manage')"><b>🌱 Jadi Lebih Tenang</b>Cara mengurus stres</button>
+ </div>
+ <button class="start" onclick="start('all')">MULA BERMAIN →</button>
+</section>
+
+<section id="game" class="hidden">
+ <div class="info">
+  <b id="number">Soalan 1</b>
+  <b>⭐ Markah: <span id="score">0</span></b>
+  <b>❤️ Nyawa: <span id="life">3</span></b>
+ </div>
+ <div class="bar"><div class="fill" id="progress"></div></div>
+ <p id="category" style="color:#79a8c1;font-weight:bold"></p>
+ <h2 id="question"></h2>
+ <div id="answers"></div>
+ <div id="feedback"></div>
+ <button class="next hidden" id="next" onclick="next()">Seterusnya →</button>
+</section>
+
+<section id="result" class="hidden result">
+ <h1>🌈 Syabas!</h1>
+ <h2>Permainan Selesai</h2>
+ <h1 id="final"></h1>
+ <p id="message"></p>
+ <h3>Ingat untuk menjaga diri:</h3>
+ <p>🌿 Berehat secukupnya</p>
+ <p>🌿 Susun masa dengan baik</p>
+ <p>🌿 Berkongsi masalah dengan orang dipercayai</p>
+ <button class="start" onclick="home()">MAIN SEMULA</button>
+</section>
+</main>
+
+<script>
+const data=[
+{c:"ASAS STRES",q:"Apakah maksud stres?",a:["Tindak balas terhadap tekanan dan cabaran","Perasaan gembira","Keadaan tanpa emosi","Tidur yang mencukupi"],k:0,g:"cause",e:"Stres ialah tindak balas fizikal dan emosi terhadap tekanan atau cabaran."},
+{c:"PUNCA STRES",q:"Apakah punca stres yang biasa dialami pelajar?",a:["Tugasan yang terlalu banyak","Tidur mencukupi","Aktiviti santai","Sokongan keluarga"],k:0,g:"cause",e:"Beban tugasan dan tarikh akhir boleh menyebabkan tekanan."},
+{c:"TANDA STRES",q:"Antara berikut, yang manakah tanda emosi stres?",a:["Mudah marah dan gelisah","Berasa tenang","Sentiasa gembira","Tiada kebimbangan"],k:0,g:"cause",e:"Mudah marah dan gelisah boleh menjadi tanda stres."},
+{c:"TANDA FIZIKAL",q:"Apakah tanda fizikal stres?",a:["Sakit kepala dan otot tegang","Badan semakin tinggi","Tidak perlu tidur","Penglihatan bertambah baik"],k:0,g:"cause",e:"Stres boleh menyebabkan sakit kepala, ketegangan otot dan gangguan tidur."},
+{c:"PUNCA STRES",q:"Apakah contoh stres berkaitan kewangan?",a:["Bimbang tidak cukup wang","Tidak tahu melukis","Mendengar muzik","Bersiar-siar"],k:0,g:"cause",e:"Kebimbangan tentang wang dan perbelanjaan boleh menyebabkan stres."},
+{c:"KESAN STRES",q:"Apakah kesan stres berpanjangan?",a:["Tumpuan dan tidur terganggu","Semua masalah hilang","Tiada kesan","Menjadi lebih tinggi"],k:0,g:"cause",e:"Stres berpanjangan boleh menjejaskan kesihatan dan kesejahteraan."},
+{c:"PENGURUSAN STRES",q:"Apakah langkah pertama mengurus stres?",a:["Kenal pasti punca tekanan","Menyalahkan diri","Mengabaikan masalah","Tidak bercakap dengan sesiapa"],k:0,g:"manage",e:"Mengenal pasti punca membantu kita memilih penyelesaian yang sesuai."},
+{c:"TEKNIK PERNAFASAN",q:"Bagaimanakah cara menenangkan diri ketika cemas?",a:["Bernafas perlahan-lahan","Menahan nafas","Menjerit","Berlari tanpa henti"],k:0,g:"manage",e:"Pernafasan perlahan membantu tubuh menjadi lebih tenang."},
+{c:"PENGURUSAN MASA",q:"Anda mempunyai banyak tugasan. Apakah tindakan terbaik?",a:["Susun keutamaan tugasan","Tunggu saat akhir","Abaikan semuanya","Tidak membuat apa-apa"],k:0,g:"manage",e:"Menyusun keutamaan membantu mengurus masa dengan lebih baik."},
+{c:"GAYA HIDUP",q:"Mengapakah tidur mencukupi penting?",a:["Membantu minda dan badan berehat","Membuat tugasan siap sendiri","Menghapuskan semua masalah","Tidak mempunyai manfaat"],k:0,g:"manage",e:"Tidur mencukupi membantu emosi, tumpuan dan kesihatan."},
+{c:"AKTIVITI SIHAT",q:"Aktiviti manakah membantu mengurangkan stres?",a:["Senaman ringan","Tidak makan","Tidak berehat","Memendam perasaan"],k:0,g:"manage",e:"Aktiviti fizikal boleh membantu meningkatkan mood."},
+{c:"SOKONGAN SOSIAL",q:"Rakan anda kelihatan tertekan. Apakah tindakan sesuai?",a:["Dengar dan beri sokongan","Mengejeknya","Menyebarkan masalahnya","Mengabaikannya"],k:0,g:"manage",e:"Mendengar dengan empati boleh membantu rakan berasa disokong."},
+{c:"MENDAPATKAN BANTUAN",q:"Jika stres terlalu berat, apakah tindakan wajar?",a:["Berbincang dengan kaunselor","Memendam semuanya","Mengasingkan diri","Mengabaikan kesihatan"],k:0,g:"manage",e:"Mendapatkan bantuan ialah tindakan yang baik dan matang."},
+{c:"PEMIKIRAN POSITIF",q:"Apakah pemikiran yang membantu selepas gagal dalam ujian?",a:["Saya boleh belajar daripada kesilapan","Saya tidak berguna","Saya tidak akan berjaya","Saya patut berhenti"],k:0,g:"manage",e:"Kesilapan boleh menjadi peluang untuk belajar dan memperbaiki diri."},
+{c:"KESEIMBANGAN HIDUP",q:"Apakah maksud keseimbangan hidup?",a:["Mengurus tanggungjawab dan rehat","Belajar tanpa berhenti","Mengelakkan semua orang","Tidak melakukan aktiviti"],k:0,g:"manage",e:"Keseimbangan hidup merangkumi tanggungjawab, rehat dan hubungan sosial."}
+];
+let questions=[],i=0,score=0,life=3,mode="all",locked=false;
+function start(m){
+ mode=m;
+ questions=data.filter(x=>m==="all"||x.g===m).sort(()=>Math.random()-.5);
+ i=0;score=0;life=3;show("game");render();
+}
+function show(id){
+ ["home","game","result"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+}
+function render(){
+ locked=false;let q=questions[i];
+ document.getElementById("number").textContent=`Soalan ${i+1} / ${questions.length}`;
+ document.getElementById("score").textContent=score;
+ document.getElementById("life").textContent=life;
+ document.getElementById("progress").style.width=(i/questions.length*100)+"%";
+ document.getElementById("category").textContent=q.c;
+ document.getElementById("question").textContent=q.q;
+ document.getElementById("feedback").textContent="";
+ document.getElementById("next").classList.add("hidden");
+ let box=document.getElementById("answers");box.innerHTML="";
+ q.a.forEach((v,n)=>{
+  let b=document.createElement("button");
+  b.className="answer";b.textContent=String.fromCharCode(65+n)+". "+v;
+  b.onclick=()=>answer(n);box.appendChild(b);
+ });
+}
+function answer(n){
+ if(locked)return;locked=true;
+ let q=questions[i],buttons=document.querySelectorAll(".answer");
+ buttons.forEach((b,j)=>{
+  b.disabled=true;
+  if(j===q.k)b.classList.add("correct");
+  if(j===n&&n!==q.k)b.classList.add("wrong");
+ });
+ let f=document.getElementById("feedback");
+ if(n===q.k){score+=10;f.textContent="✅ Betul! "+q.e;f.style.background="#e5f7ed"}
+ else{life--;f.textContent="💡 Belum tepat. "+q.e;f.style.background="#fff0f3"}
+ document.getElementById("score").textContent=score;
+ document.getElementById("life").textContent=life;
+ document.getElementById("next").classList.remove("hidden");
+}
+function next(){
+ if(i<questions.length-1&&life>0){i++;render()}
+ else finish();
+}
+function finish(){
+ show("result");
+ document.getElementById("final").textContent=score+" MARKAH";
+ document.getElementById("message").textContent=life===0?
+ "Nyawa anda telah habis. Jangan berputus asa, cuba lagi!":
+ "Anda telah menjawab "+questions.length+" soalan. Teruskan belajar menjaga kesihatan minda!";
+}
+function home(){show("home")}
+</script>
+</body>
+</html>
